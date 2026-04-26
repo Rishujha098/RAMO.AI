@@ -1,0 +1,23 @@
+{
+  "name": "ramo-ai",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n web,api -c cyan,magenta \"npm run dev:web\" \"npm run dev:api\"",
+    "dev:web": "npm run dev -w @ramo-ai/web",
+    "dev:api": "npm run dev -w @ramo-ai/api",
+    "build": "npm run build -w @ramo-ai/web && npm run build -w @ramo-ai/api",
+    "lint": "npm run lint -w @ramo-ai/web && npm run lint -w @ramo-ai/api",
+    "typecheck": "npm run typecheck -w @ramo-ai/web && npm run typecheck -w @ramo-ai/api"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
