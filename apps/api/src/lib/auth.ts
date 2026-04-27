@@ -1,6 +1,7 @@
 import { jwtVerify } from 'jose';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { env } from './env.js';
+import { createSupabaseUserClient } from './supabase.js';
 
 export type AuthUser = {
   id: string;
@@ -40,6 +41,18 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply) 
     request.user = email ? { id: sub, email } : { id: sub };
     request.accessToken = token;
   } catch {
-    return reply.code(401).send({ error: 'invalid_token' });
+    // Fallback: validate token against Supabase Auth.
+    // This makes auth resilient if SUPABASE_JWT_SECRET is misconfigured in the runtime environment.
+    try {
+      const supabase = createSupabaseUserClient(token);
+      const { data, error } = await supabase.auth.getUser();
+      if (error || !data.user) return reply.code(401).send({ error: 'invalid_token' });
+
+      const email = data.user.email ?? undefined;
+      request.user = email ? { id: data.user.id, email } : { id: data.user.id };
+      request.accessToken = token;
+    } catch {
+      return reply.code(401).send({ error: 'invalid_token' });
+    }
   }
 }
