@@ -212,7 +212,9 @@ export default function LoginPage() {
         router.replace('/dashboard');
         return;
       }
-      const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+
+      const emailValue = email.trim();
+      const { error: err } = await supabase.auth.signInWithPassword({ email: emailValue, password });
       if (err) throw err;
       router.replace('/dashboard');
     } catch (e) {
@@ -231,8 +233,23 @@ export default function LoginPage() {
         router.replace('/dashboard');
         return;
       }
-      const { error: err } = await supabase.auth.signUp({ email, password });
+
+      const emailValue = email.trim();
+      const { data, error: err } = await supabase.auth.signUp({
+        email: emailValue,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
       if (err) throw err;
+
+      if (!data.session) {
+        setNotice('Account created. Check your email to confirm, then sign in.');
+        setMode('sign-in');
+        return;
+      }
+
       router.replace('/dashboard');
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
