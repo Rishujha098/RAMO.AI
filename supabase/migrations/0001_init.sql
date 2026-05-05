@@ -127,6 +127,10 @@ alter table public.answer_evaluations enable row level security;
 alter table public.session_reports enable row level security;
 
 -- profiles policies
+drop policy if exists "profiles_select_own" on public.profiles;
+drop policy if exists "profiles_update_own" on public.profiles;
+drop policy if exists "profiles_admin_select_all" on public.profiles;
+
 create policy "profiles_select_own" on public.profiles
 for select to authenticated
 using (user_id = auth.uid());
@@ -141,6 +145,9 @@ for select to authenticated
 using (public.is_admin(auth.uid()));
 
 -- sessions policies
+drop policy if exists "sessions_crud_own" on public.interview_sessions;
+drop policy if exists "sessions_admin_select_all" on public.interview_sessions;
+
 create policy "sessions_crud_own" on public.interview_sessions
 for all to authenticated
 using (user_id = auth.uid())
@@ -151,6 +158,9 @@ for select to authenticated
 using (public.is_admin(auth.uid()));
 
 -- questions policies
+drop policy if exists "questions_crud_own" on public.interview_questions;
+drop policy if exists "questions_admin_select_all" on public.interview_questions;
+
 create policy "questions_crud_own" on public.interview_questions
 for all to authenticated
 using (
@@ -171,6 +181,9 @@ for select to authenticated
 using (public.is_admin(auth.uid()));
 
 -- answers policies
+drop policy if exists "answers_crud_own" on public.interview_answers;
+drop policy if exists "answers_admin_select_all" on public.interview_answers;
+
 create policy "answers_crud_own" on public.interview_answers
 for all to authenticated
 using (
@@ -191,6 +204,9 @@ for select to authenticated
 using (public.is_admin(auth.uid()));
 
 -- evaluations policies
+drop policy if exists "evaluations_crud_own" on public.answer_evaluations;
+drop policy if exists "evaluations_admin_select_all" on public.answer_evaluations;
+
 create policy "evaluations_crud_own" on public.answer_evaluations
 for all to authenticated
 using (
@@ -215,6 +231,9 @@ for select to authenticated
 using (public.is_admin(auth.uid()));
 
 -- reports policies
+drop policy if exists "reports_crud_own" on public.session_reports;
+drop policy if exists "reports_admin_select_all" on public.session_reports;
+
 create policy "reports_crud_own" on public.session_reports
 for all to authenticated
 using (
@@ -236,6 +255,10 @@ using (public.is_admin(auth.uid()));
 
 -- Storage policies (run after buckets are created)
 -- Resumes: private, user can insert/select/delete only their own path prefix
+drop policy if exists "resumes_insert_own" on storage.objects;
+drop policy if exists "resumes_select_own" on storage.objects;
+drop policy if exists "resumes_delete_own" on storage.objects;
+
 create policy "resumes_insert_own" on storage.objects
 for insert to authenticated
 with check (
@@ -258,6 +281,10 @@ using (
 );
 
 -- Audio: private, user can insert/select/delete only their own path prefix
+drop policy if exists "audio_insert_own" on storage.objects;
+drop policy if exists "audio_select_own" on storage.objects;
+drop policy if exists "audio_delete_own" on storage.objects;
+
 create policy "audio_insert_own" on storage.objects
 for insert to authenticated
 with check (
