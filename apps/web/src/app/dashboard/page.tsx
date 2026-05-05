@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { RequireAuth } from '@/components/RequireAuth';
 import { useAuth } from '@/components/AuthProvider';
 import { apiFetch } from '@/lib/api';
+import { supabase } from '@/lib/supabase';
 
 type SessionRow = {
   id: string;
@@ -16,9 +17,62 @@ type SessionRow = {
 };
 
 export default function DashboardPage() {
-  const { accessToken, previewMode } = useAuth();
+  const { accessToken, previewMode, session } = useAuth();
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string>('');
+
+  useEffect(() => {
+    if (previewMode) {
+      setDisplayName('there');
+      return;
+    }
+    if (!session) {
+      setDisplayName('');
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const { data, error: profileError } = await supabase
+          .from('profiles')
+          .select('first_name,last_name,name')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+
+        if (cancelled) return;
+        if (profileError) throw profileError;
+
+        const first = (data?.first_name ?? '').trim();
+        const full = (data?.name ?? '').trim();
+
+        const fromMetadata =
+          (typeof session.user.user_metadata?.given_name === 'string'
+            ? session.user.user_metadata.given_name
+            : '') ||
+          (typeof session.user.user_metadata?.full_name === 'string'
+            ? session.user.user_metadata.full_name
+            : '') ||
+          (typeof session.user.user_metadata?.name === 'string'
+            ? session.user.user_metadata.name
+            : '');
+
+        const fallback = (session.user.email ?? '').split('@')[0] ?? '';
+        const chosen = first || full || String(fromMetadata).trim() || fallback || 'there';
+        setDisplayName(chosen);
+      } catch {
+        if (cancelled) return;
+        const fallback = (session.user.email ?? '').split('@')[0] ?? '';
+        setDisplayName(fallback || 'there');
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [previewMode, session]);
 
   useEffect(() => {
     if (!accessToken || previewMode) {
@@ -45,7 +99,7 @@ export default function DashboardPage() {
     <RequireAuth>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Dashboard</h1>
+          <h1 className="text-2xl font-semibold">Hey {displayName || 'there'}</h1>
           <Link
             className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
             href="/interview/new"
