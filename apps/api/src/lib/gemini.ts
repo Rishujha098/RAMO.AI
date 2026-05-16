@@ -54,21 +54,42 @@ export type Report = z.infer<typeof reportSchema>;
 
 function extractJson(text: string): string {
   const trimmed = text.trim();
-  if (trimmed.startsWith('{') || trimmed.startsWith('[')) return trimmed;
+  
+  // If already starts with JSON delimiter, try it as-is
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    return trimmed;
+  }
 
+  // Find JSON object
   const firstBrace = trimmed.indexOf('{');
   const lastBrace = trimmed.lastIndexOf('}');
   if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-    return trimmed.slice(firstBrace, lastBrace + 1);
+    const extracted = trimmed.slice(firstBrace, lastBrace + 1);
+    return extracted;
   }
 
+  // Find JSON array
   const firstBracket = trimmed.indexOf('[');
   const lastBracket = trimmed.lastIndexOf(']');
   if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
-    return trimmed.slice(firstBracket, lastBracket + 1);
+    const extracted = trimmed.slice(firstBracket, lastBracket + 1);
+    return extracted;
   }
 
   return trimmed;
+}
+
+function cleanJsonString(str: string): string {
+  // Remove BOM and other unicode issues
+  let cleaned = str.replace(/^\uFEFF/, '');
+  
+  // Fix common JSON issues
+  cleaned = cleaned
+    .replace(/,\s*([}\]])/g, '$1') // Remove trailing commas
+    .replace(/:\s*undefined/g, ': null') // Replace undefined with null
+    .replace(/'/g, '"'); // Replace single quotes with double quotes (basic fix)
+  
+  return cleaned;
 }
 
 function parseJson<T>(schema: z.ZodType<T>, raw: unknown): T {
@@ -77,8 +98,22 @@ function parseJson<T>(schema: z.ZodType<T>, raw: unknown): T {
   }
 
   if (typeof raw === 'string') {
-    const jsonText = extractJson(raw);
-    return schema.parse(JSON.parse(jsonText));
+    try {
+      const jsonText = extractJson(raw);
+      const cleaned = cleanJsonString(jsonText);
+      const parsed = JSON.parse(cleaned);
+      return schema.parse(parsed);
+    } catch (error) {
+      // Log the error for debugging
+      console.error('JSON Parse Error:', {
+        originalLength: raw.length,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        snippet: raw.substring(0, 500),
+      });
+      throw new Error(
+        `Failed to parse Gemini response as JSON: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
   }
 
   return schema.parse(raw);
@@ -93,20 +128,22 @@ export async function generateQuestions(input: {
   const model = genAI.getGenerativeModel({ model: env.GEMINI_MODEL_QUESTIONS });
 
   const prompt = [
-    'Generate interview questions as strict JSON.',
+    'RESPOND WITH VALID JSON ONLY. NO MARKDOWN, NO EXPLANATIONS, NO EXTRA TEXT.',
     '',
-    'Return exactly this JSON object shape:',
-    '{"questions":[{"text":"...","category":"technical|hr","difficulty":"easy|medium|hard"}]}',
+    'Return this exact JSON structure:',
+    '{"questions":[{"text":"question","category":"technical","difficulty":"easy"}]}',
     '',
     `Role: ${input.role}`,
-    `Experience level: ${input.experienceLevel}`,
-    `Interview type: ${input.interviewType}`,
-    `Number of questions: ${input.questionCount}`,
+    `Experience Level: ${input.experienceLevel}`,
+    `Interview Type: ${input.interviewType}`,
+    `Num Questions: ${input.questionCount}`,
     '',
-    'Constraints:',
-    '- Do not include markdown or extra keys.',
-    '- Keep questions realistic and role-specific.',
-    '- If interview type is mixed, include both technical and hr categories.',
+    'REQUIREMENTS:',
+    '- Valid JSON only - start with { and end with }',
+    '- No markdown, no extra text before or after JSON',
+    '- category: "technical" or "hr"',
+    '- difficulty: "easy", "medium", or "hard"',
+    '- For mixed type: include both categories',
   ].join('\n');
 
   const result = await model.generateContent({
@@ -132,35 +169,26 @@ export async function evaluateAnswer(input: {
   const model = genAI.getGenerativeModel({ model: env.GEMINI_MODEL_EVAL });
 
   const prompt = [
-    'You are an interview evaluator. Evaluate the candidate answer and return strict JSON only.',
+    'RESPOND WITH VALID JSON ONLY. NO MARKDOWN, NO EXPLANATIONS, NO EXTRA TEXT.',
     '',
-    'Return exactly this JSON object shape:',
-    '{',
-    '  "overallScore": 0-100,',
-    '  "rubric": {"clarity":0-100,"structure":0-100,"confidence":0-100,"roleFit":0-100,"technical":0-100},',
-    '  "strengths": ["..."],',
-    '  "improvements": ["..."],',
-    '  "idealAnswer": "...",',
-    '  "confidenceSignals": {"hedgingPhrasesFound":["..."],"fillerCount":0,"hesitationNotes":["..."]}',
-    '}',
+    'Evaluate this interview answer and return this exact JSON structure:',
+    '{"overallScore":0,"rubric":{"clarity":0,"structure":0,"confidence":0},"strengths":[],"improvements":[],"idealAnswer":"","confidenceSignals":{"hedgingPhrasesFound":[],"fillerCount":0}}',
     '',
     `Role: ${input.role}`,
-    `Experience level: ${input.experienceLevel}`,
-    `Interview type: ${input.interviewType}`,
-    '',
+    `Experience: ${input.experienceLevel}`,
+    `Type: ${input.interviewType}`,
     `Question: ${input.questionText}`,
-    `Answer (transcript): ${input.answerTranscript}`,
+    `Answer: ${input.answerTranscript}`,
     '',
-    'Voice/timing signals (optional):',
-    `- responseLatencyMs: ${input.responseLatencyMs ?? 'null'}`,
-    `- audioDurationMs: ${input.audioDurationMs ?? 'null'}`,
-    '',
-    'Scoring guidance:',
-    '- Confidence is inferred from certainty vs hesitation, filler phrases, and explanation firmness.',
-    '- Clarity rewards concise, unambiguous communication.',
-    '- Structure rewards logical flow and organized points.',
-    '- Keep feedback practical and actionable.',
-    '- Do not mention that you are an AI or refer to policies.',
+    'REQUIREMENTS:',
+    '- Valid JSON only - no markdown, no extra text',
+    '- Scores 0-100 integers',
+    '- Confidence inferred from hesitation, fillers, firmness',
+    '- Clarity: concise, unambiguous communication',
+    '- Structure: logical flow and organized points',
+    '- strengths & improvements: array of practical strings',
+    '- hedgingPhrasesFound: array of phrases detected (or empty)',
+    '- fillerCount: integer count of filler words',
   ].join('\n');
 
   const result = await model.generateContent({
@@ -193,28 +221,25 @@ export async function generateReport(input: {
   const model = genAI.getGenerativeModel({ model: env.GEMINI_MODEL_REPORT });
 
   const prompt = [
-    'You are an interview coach. Create a final report from the interview Q/A and scores. Return strict JSON only.',
+    'RESPOND WITH VALID JSON ONLY. NO MARKDOWN, NO EXPLANATIONS, NO EXTRA TEXT.',
     '',
-    'Return exactly this JSON object shape:',
-    '{',
-    '  "summary": "...",',
-    '  "categoryScores": {"technical":0-100,"communication":0-100,"confidence":0-100},',
-    '  "weakAreas": ["..."],',
-    '  "nextPracticePlan": ["..."]',
-    '}',
+    'Create final interview report with this exact JSON structure:',
+    '{"summary":"","categoryScores":{"technical":0,"communication":0,"confidence":0},"weakAreas":[],"nextPracticePlan":[]}',
     '',
     `Role: ${input.role}`,
-    `Experience level: ${input.experienceLevel}`,
-    `Interview type: ${input.interviewType}`,
+    `Level: ${input.experienceLevel}`,
+    `Type: ${input.interviewType}`,
     '',
-    'Interview data:',
+    'Interview Q/A Data:',
     JSON.stringify(input.qa, null, 2),
     '',
-    'Guidance:',
-    '- Keep summary concise (4-6 sentences).',
-    '- Weak areas should be specific and repeated themes.',
-    '- Next practice plan should be 3-7 actionable steps.',
-    '- Do not include markdown.',
+    'REQUIREMENTS:',
+    '- Valid JSON only - start with { end with }',
+    '- summary: 2-3 sentences',
+    '- Scores 0-100 integers',
+    '- weakAreas: array of repeated themes (3-5 items)',
+    '- nextPracticePlan: 3-5 actionable improvement steps',
+    '- No markdown, no extra text anywhere',
   ].join('\n');
 
   const result = await model.generateContent({
