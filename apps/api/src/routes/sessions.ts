@@ -130,8 +130,8 @@ export async function sessionRoutes(app: FastifyInstance) {
         questionId: z.string().uuid(),
         answerMode: z.enum(['text', 'voice']),
         transcript: z.string().min(1).max(12_000),
-        responseLatencyMs: z.number().int().min(0).max(10 * 60_000).optional(),
-        audioDurationMs: z.number().int().min(0).max(10 * 60_000).optional(),
+        responseLatencyMs: z.number().int().min(0).max(3600_000).optional(), // 1 hour max
+        audioDurationMs: z.number().int().min(0).max(3600_000).optional(), // 1 hour max
         audioPath: z.string().min(1).optional(),
       })
       .parse(request.body);
