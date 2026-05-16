@@ -2,16 +2,19 @@ import type { FastifyInstance } from 'fastify';
 import { requireAuth } from '../lib/auth.js';
 import { createSupabaseUserClient } from '../lib/supabase.js';
 
-async function requireAdmin(app: FastifyInstance, accessToken: string) {
+async function requireAdmin(app: FastifyInstance, accessToken: string, userId: string) {
   const supabase = createSupabaseUserClient(accessToken);
-  const { data, error } = await supabase.from('profiles').select('is_admin').single();
-  if (error) return false;
+  const { data, error } = await supabase.from('profiles').select('is_admin').eq('user_id', userId).single();
+  if (error) {
+    app.log.error({ err: error, userId }, 'requireAdmin db error');
+    return false;
+  }
   return Boolean(data?.is_admin);
 }
 
 export async function adminRoutes(app: FastifyInstance) {
   app.get('/v1/admin/users', { preHandler: requireAuth }, async (request, reply) => {
-    const ok = await requireAdmin(app, request.accessToken!);
+    const ok = await requireAdmin(app, request.accessToken!, request.user!.id);
     if (!ok) return reply.code(403).send({ error: 'forbidden' });
 
     const supabase = createSupabaseUserClient(request.accessToken!);
@@ -25,7 +28,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get('/v1/admin/sessions', { preHandler: requireAuth }, async (request, reply) => {
-    const ok = await requireAdmin(app, request.accessToken!);
+    const ok = await requireAdmin(app, request.accessToken!, request.user!.id);
     if (!ok) return reply.code(403).send({ error: 'forbidden' });
 
     const supabase = createSupabaseUserClient(request.accessToken!);
