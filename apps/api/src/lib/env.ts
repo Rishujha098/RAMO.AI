@@ -35,9 +35,9 @@ const envSchema = z.object({
   SUPABASE_JWT_SECRET: z.string().min(10),
 
   GEMINI_API_KEY: z.string().min(1),
-  GEMINI_MODEL_QUESTIONS: z.string().default('gemini-1.5-flash'),
-  GEMINI_MODEL_EVAL: z.string().default('gemini-1.5-flash'),
-  GEMINI_MODEL_REPORT: z.string().default('gemini-1.5-flash'),
+  GEMINI_MODEL_QUESTIONS: z.string().default('gemini-2.5-flash'),
+  GEMINI_MODEL_EVAL: z.string().default('gemini-2.5-flash'),
+  GEMINI_MODEL_REPORT: z.string().default('gemini-2.5-flash'),
 
   CORS_ALLOWED_ORIGINS: z.string().optional(),
 
