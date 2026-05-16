@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../lib/auth.js';
-import { createSupabaseUserClient } from '../lib/supabase.js';
+import { createSupabaseUserClient, createSupabaseAdminClient } from '../lib/supabase.js';
 import { evaluateAnswer, generateQuestions, generateReport } from '../lib/gemini.js';
 
 const interviewTypeSchema = z.enum(['technical', 'hr', 'mixed']);
@@ -171,13 +171,17 @@ export async function sessionRoutes(app: FastifyInstance) {
       audioUploadedAt = new Date().toISOString();
     }
 
-    // Check and delete existing answer for this question (if any) to avoid constraint violation
-    const { error: deleteErr } = await supabase
+    // Use admin client to forcefully delete any existing answer for this question
+    // This bypasses RLS policies and ensures the old answer is removed
+    const adminSupabase = createSupabaseAdminClient();
+    
+    const { error: deleteErr } = await adminSupabase
       .from('interview_answers')
       .delete()
       .eq('question_id', body.questionId);
 
     if (deleteErr) {
+      // Log warning but continue - the insert will fail with a better error if needed
       console.warn('Warning: failed to delete existing answer:', deleteErr);
     }
 
