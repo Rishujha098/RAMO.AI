@@ -171,6 +171,16 @@ export async function sessionRoutes(app: FastifyInstance) {
       audioUploadedAt = new Date().toISOString();
     }
 
+    // Check and delete existing answer for this question (if any) to avoid constraint violation
+    const { error: deleteErr } = await supabase
+      .from('interview_answers')
+      .delete()
+      .eq('question_id', body.questionId);
+
+    if (deleteErr) {
+      console.warn('Warning: failed to delete existing answer:', deleteErr);
+    }
+
     const { data: answerRow, error: aErr } = await supabase
       .from('interview_answers')
       .insert({
