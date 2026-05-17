@@ -8,11 +8,13 @@ import { supabase } from '@/lib/supabase';
 export function RequireAuth({
   children,
   skipOnboarding,
+  adminOnly,
 }: {
   children: React.ReactNode;
   skipOnboarding?: boolean;
+  adminOnly?: boolean;
 }) {
-  const { loading, session, previewMode } = useAuth();
+  const { loading, session, previewMode, isAdmin } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [onboardingChecked, setOnboardingChecked] = useState(false);
@@ -22,6 +24,12 @@ export function RequireAuth({
       router.replace('/login');
     }
   }, [loading, previewMode, session, router]);
+
+  useEffect(() => {
+    if (!loading && !previewMode && session && adminOnly && !isAdmin) {
+      router.replace('/dashboard');
+    }
+  }, [loading, previewMode, session, adminOnly, isAdmin, router]);
 
   useEffect(() => {
     if (loading) return;
