@@ -124,12 +124,12 @@ export function VoiceRecorder({ onRecorded }: Props) {
   }
 
   return (
-    <div className="space-y-2">
-      <div className="flex gap-2">
+    <div className="space-y-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         {!isRecording ? (
           <button
             type="button"
-            className="h-11 rounded-full bg-blue-600 px-5 text-sm font-semibold text-white hover:bg-blue-700"
+            className="h-11 rounded-full bg-blue-600 px-6 text-sm font-semibold text-white transition-colors hover:bg-blue-700 active:bg-blue-800"
             onClick={() => start().catch((e) => setError(String(e)))}
           >
             Start recording
@@ -137,21 +137,31 @@ export function VoiceRecorder({ onRecorded }: Props) {
         ) : (
           <button
             type="button"
-            className="h-11 rounded-full bg-red-600 px-5 text-sm font-semibold text-white hover:bg-red-700"
+            className="h-11 rounded-full bg-red-600 px-6 text-sm font-semibold text-white transition-colors hover:bg-red-700 active:bg-red-800"
             onClick={stop}
           >
-            Stop
+            Stop recording
           </button>
         )}
-        <div className="self-center text-sm text-slate-600">
-          {hasSpeechRecognition ? 'Live transcript enabled' : 'Live transcript unavailable (you can type it)'}
+        <div className="text-xs text-slate-500 sm:text-sm">
+          {hasSpeechRecognition 
+            ? 'Live transcript enabled' 
+            : 'Live transcript unavailable (typing required)'}
         </div>
       </div>
 
-      {error ? <div className="text-sm text-red-600">{error}</div> : null}
+      {error ? (
+        <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600 ring-1 ring-red-100">
+          {error}
+        </div>
+      ) : null}
 
-      <div className="min-h-[80px] whitespace-pre-wrap rounded-2xl bg-white/70 p-4 text-sm ring-1 ring-slate-200/70">
-        {transcript ? transcript : <span className="text-slate-500">Transcript will appear here…</span>}
+      <div className="min-h-[100px] whitespace-pre-wrap rounded-2xl bg-white/50 p-4 text-sm leading-relaxed text-slate-700 ring-1 ring-slate-200/70">
+        {transcript ? (
+          transcript
+        ) : (
+          <span className="italic text-slate-400">Your transcript will appear here as you speak...</span>
+        )}
       </div>
     </div>
   );
