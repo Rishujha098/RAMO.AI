@@ -86,8 +86,7 @@ function cleanJsonString(str: string): string {
   // Fix common JSON issues
   cleaned = cleaned
     .replace(/,\s*([}\]])/g, '$1') // Remove trailing commas
-    .replace(/:\s*undefined/g, ': null') // Replace undefined with null
-    .replace(/'/g, '"'); // Replace single quotes with double quotes (basic fix)
+    .replace(/:\s*undefined/g, ': null'); // Replace undefined with null
   
   return cleaned;
 }
