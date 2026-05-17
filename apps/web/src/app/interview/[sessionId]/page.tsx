@@ -251,37 +251,42 @@ export default function InterviewSessionPage() {
         ) : null}
 
         {data && currentQuestion ? (
-          <div className="space-y-4 rounded-2xl bg-white/70 p-4 ring-1 ring-slate-200/70">
+          <div className="space-y-4 rounded-2xl bg-white/70 p-4 ring-1 ring-slate-200/70 sm:p-6">
             <div>
-              <div className="text-xs text-slate-600">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 sm:text-xs">
                 Question {currentQuestion.order_index + 1} of {data.questions.length} • {currentQuestion.category} • {currentQuestion.difficulty}
               </div>
-              <div className="text-lg font-medium">{currentQuestion.question_text}</div>
+              <div className="mt-1 text-lg font-medium text-slate-900 sm:text-xl">{currentQuestion.question_text}</div>
             </div>
 
-            <div className="flex gap-3 text-sm">
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="mode"
-                  checked={answerMode === 'text'}
-                  onChange={() => setAnswerMode('text')}
-                />
-                Text
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="mode"
-                  checked={answerMode === 'voice'}
-                  onChange={() => setAnswerMode('voice')}
-                />
-                Voice
-              </label>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:text-sm">
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="radio"
+                    name="mode"
+                    className="h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-600/20"
+                    checked={answerMode === 'text'}
+                    onChange={() => setAnswerMode('text')}
+                  />
+                  <span className="text-sm font-medium text-slate-700">Text</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="radio"
+                    name="mode"
+                    className="h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-600/20"
+                    checked={answerMode === 'voice'}
+                    onChange={() => setAnswerMode('voice')}
+                  />
+                  <span className="text-sm font-medium text-slate-700">Voice</span>
+                </label>
+              </div>
+              <div className="h-px bg-slate-200 sm:hidden" />
               {data.session.audio_opt_in ? (
-                <div className="self-center text-xs text-slate-600">Audio opt-in enabled (auto-deleted after 30 days)</div>
+                <div className="text-[11px] text-slate-500 sm:text-xs">Audio opt-in enabled (auto-deleted after 30 days)</div>
               ) : (
-                <div className="self-center text-xs text-slate-600">Audio not saved (transcript only)</div>
+                <div className="text-[11px] text-slate-500 sm:text-xs">Audio not saved (transcript only)</div>
               )}
             </div>
 
@@ -296,9 +301,9 @@ export default function InterviewSessionPage() {
             ) : null}
 
             <div className="space-y-2">
-              <label className="block text-sm font-medium">Your answer (transcript)</label>
+              <label className="block text-sm font-medium text-slate-700">Your answer (transcript)</label>
               <textarea
-                className="min-h-[140px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none ring-blue-600/20 focus:ring-4"
+                className="min-h-[160px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed outline-none ring-blue-600/20 transition-shadow focus:ring-4"
                 value={answerText}
                 onChange={(e) => setAnswerText(e.target.value)}
                 placeholder="Type your answer here (or record voice to generate a transcript)…"
@@ -308,7 +313,7 @@ export default function InterviewSessionPage() {
             <button
               type="button"
               disabled={saving || !answerText.trim()}
-              className="h-11 rounded-full bg-blue-600 px-5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+              className="flex h-12 w-full items-center justify-center rounded-full bg-blue-600 px-6 text-sm font-semibold text-white transition-colors hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 sm:w-auto"
               onClick={() => void submitAnswer()}
             >
               {saving ? 'Submitting…' : 'Submit answer'}

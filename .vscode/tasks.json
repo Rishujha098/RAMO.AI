@@ -1,0 +1,15 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Push Changes",
+			"type": "shell",
+			"command": "git commit -am \"fix(api): json cleanups\" && git push origin main"
+		},
+		{
+			"label": "Push Changes",
+			"type": "shell",
+			"command": "git commit -am \"fix(api): json structure\" ; git push origin main"
+		}
+	]
+}

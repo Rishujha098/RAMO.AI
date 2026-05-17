@@ -126,85 +126,121 @@ export default function ReportPage() {
 
   return (
     <RequireAuth>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Final report</h1>
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-2xl font-semibold text-slate-900">Final report</h1>
           <Link
-            className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+            className="inline-flex h-10 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 sm:h-11"
             href="/dashboard"
           >
             Back to dashboard
           </Link>
         </div>
 
-        {loading ? <div>Loading…</div> : null}
-        {error ? <div className="text-sm text-red-600">{error}</div> : null}
+        {loading ? (
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600" />
+            Loading report…
+          </div>
+        ) : null}
+        
+        {error ? <div className="rounded-2xl bg-red-50 p-4 text-sm text-red-600 ring-1 ring-red-200">{error}</div> : null}
 
-        {!report ? (
-          <div className="space-y-3 rounded-2xl bg-white/70 p-4 ring-1 ring-slate-200/70">
-            <div className="text-sm text-slate-600">No report yet for this session.</div>
+        {!report && !loading ? (
+          <div className="space-y-4 rounded-3xl bg-white/70 p-6 text-center ring-1 ring-slate-200/70 sm:p-10">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div>
+              <div className="text-lg font-medium text-slate-900">No report yet</div>
+              <p className="mt-1 text-sm text-slate-500">We need to process your interview answers to generate insights.</p>
+            </div>
             <button
               type="button"
-              className="h-11 rounded-full bg-blue-600 px-5 text-sm font-semibold text-white hover:bg-blue-700"
+              className="h-12 w-full max-w-xs rounded-full bg-blue-600 px-6 text-sm font-semibold text-white transition-colors hover:bg-blue-700 active:bg-blue-800"
               onClick={() => void generate()}
             >
-              Generate report
+              Generate report now
             </button>
           </div>
-        ) : (
-          <div className="space-y-3 rounded-2xl bg-white/70 p-4 ring-1 ring-slate-200/70">
-            <div className="flex gap-2">
+        ) : report ? (
+          <div className="space-y-6 rounded-3xl bg-white/70 p-6 ring-1 ring-slate-200/70 sm:p-8">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <button
                 type="button"
-                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                className="flex-1 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 sm:flex-none"
                 onClick={() => void downloadTranscript()}
               >
-                Download my transcript
+                Download transcript
               </button>
               <button
                 type="button"
-                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                className="flex-1 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 sm:flex-none"
                 onClick={() => router.replace(`/interview/${sessionId}`)}
               >
-                View interview
+                Review answers
               </button>
             </div>
 
-            <div>
-              <div className="text-sm text-slate-600">Generated at: {new Date(report.generated_at).toLocaleString()}</div>
+            <div className="h-px bg-slate-200/60" />
+
+            <div className="space-y-1">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Generated on</div>
+              <div className="text-sm text-slate-700">{new Date(report.generated_at).toLocaleString()}</div>
             </div>
 
-            <div>
-              <div className="font-medium">Summary</div>
-              <div className="text-sm whitespace-pre-wrap">{report.summary}</div>
+            <div className="space-y-2">
+              <div className="font-semibold text-slate-900">Summary</div>
+              <div className="text-sm leading-relaxed text-slate-700 whitespace-pre-wrap">{report.summary}</div>
             </div>
 
-            <div>
-              <div className="font-medium">Scores</div>
-              <div className="text-sm">
-                Technical: {report.category_scores.technical} • Communication: {report.category_scores.communication} • Confidence: {report.category_scores.confidence}
+            <div className="space-y-3">
+              <div className="font-semibold text-slate-900">Performance scores</div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="rounded-2xl bg-blue-50/50 p-4 ring-1 ring-blue-100">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-blue-600/80">Technical</div>
+                  <div className="mt-1 text-xl font-bold text-blue-700">{report.category_scores.technical}%</div>
+                </div>
+                <div className="rounded-2xl bg-indigo-50/50 p-4 ring-1 ring-indigo-100">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-600/80">Communication</div>
+                  <div className="mt-1 text-xl font-bold text-indigo-700">{report.category_scores.communication}%</div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-600/80">Confidence</div>
+                  <div className="mt-1 text-xl font-bold text-slate-700">{report.category_scores.confidence}%</div>
+                </div>
               </div>
             </div>
 
-            <div className="text-sm">
-              <div className="font-medium">Weak areas</div>
-              <ul className="list-disc pl-5">
-                {report.weak_areas.map((w, i) => (
-                  <li key={i}>{w}</li>
-                ))}
-              </ul>
-            </div>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div className="space-y-3">
+                <div className="font-semibold text-slate-900">Areas to focus</div>
+                <ul className="space-y-2 text-sm text-slate-700">
+                  {report.weak_areas.map((w, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span className="text-blue-500">•</span>
+                      <span>{w}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
-            <div className="text-sm">
-              <div className="font-medium">Next practice plan</div>
-              <ul className="list-disc pl-5">
-                {report.next_practice_plan.map((w, i) => (
-                  <li key={i}>{w}</li>
-                ))}
-              </ul>
+              <div className="space-y-3">
+                <div className="font-semibold text-slate-900">Next steps</div>
+                <ul className="space-y-2 text-sm text-slate-700">
+                  {report.next_practice_plan.map((w, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span className="text-emerald-500">•</span>
+                      <span>{w}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
-        )}
+        ) : null}
       </div>
     </RequireAuth>
   );
