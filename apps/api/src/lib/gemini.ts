@@ -26,8 +26,8 @@ const evaluationSchema = z.object({
     roleFit: z.number().min(0).max(100).optional(),
     technical: z.number().min(0).max(100).optional(),
   }),
-  strengths: z.array(z.string().min(1)).min(1),
-  improvements: z.array(z.string().min(1)).min(1),
+  strengths: z.array(z.string().min(1)),
+  improvements: z.array(z.string().min(1)),
   idealAnswer: z.string().min(1),
   confidenceSignals: z
     .object({
@@ -47,8 +47,8 @@ const reportSchema = z.object({
     communication: z.number().min(0).max(100),
     confidence: z.number().min(0).max(100),
   }),
-  weakAreas: z.array(z.string().min(1)).min(1),
-  nextPracticePlan: z.array(z.string().min(1)).min(1),
+  weakAreas: z.array(z.string().min(1)),
+  nextPracticePlan: z.array(z.string().min(1)),
 });
 
 export type Report = z.infer<typeof reportSchema>;
