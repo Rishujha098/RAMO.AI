@@ -139,7 +139,7 @@ export async function generateQuestions(input: {
     `Interview Type: ${input.interviewType}`,
     `Num Questions: ${input.questionCount}`,
     '',
-    input.resumeData ? 'CRITICAL INSTRUCTION: A RESUME FILE IS ATTACHED. You MUST thoroughly analyze the attached resume and ask highly specific, personalized questions based directly on the candidate\\'s actual projects, skills, past companies, and detailed bullet points found in the document.' : '',
+    input.resumeData ? `CRITICAL INSTRUCTION: A RESUME FILE IS ATTACHED. You MUST thoroughly analyze the attached resume and ask highly specific, personalized questions based directly on the candidate's actual projects, skills, past companies, and detailed bullet points found in the document.` : '',
     '',
     'REQUIREMENTS:',
     '- Valid JSON only - start with { and end with }',

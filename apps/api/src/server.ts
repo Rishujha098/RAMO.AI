@@ -29,9 +29,10 @@ app.setErrorHandler((error, request, reply) => {
 
   // Default error handler
   app.log.error(error);
-  reply.status(error.statusCode || 500).send({
+  const err = error as any;
+  reply.status(err.statusCode || 500).send({
     error: 'internal_error',
-    message: error.message || 'An unexpected error occurred',
+    message: err.message || 'An unexpected error occurred',
   });
 });
 

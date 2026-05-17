@@ -81,7 +81,7 @@ export async function sessionRoutes(app: FastifyInstance) {
       experienceLevel: body.experienceLevel,
       interviewType: body.interviewType,
       questionCount: body.questionCount,
-      resumeData,
+      ...(resumeData && { resumeData }),
     });
 
     const { data: insertedQuestions, error: qError } = await supabase
