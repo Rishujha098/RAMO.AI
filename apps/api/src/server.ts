@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+import { ZodError } from 'zod';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
@@ -12,6 +13,27 @@ const app = Fastify({
 
 await app.register(sensible);
 await app.register(helmet);
+
+// Global error handler
+app.setErrorHandler((error, request, reply) => {
+  if (error instanceof ZodError) {
+    return reply.status(400).send({
+      error: 'validation_error',
+      message: 'Invalid request data',
+      details: error.errors.map((e) => ({
+        path: e.path.join('.'),
+        message: e.message,
+      })),
+    });
+  }
+
+  // Default error handler
+  app.log.error(error);
+  reply.status(error.statusCode || 500).send({
+    error: 'internal_error',
+    message: error.message || 'An unexpected error occurred',
+  });
+});
 
 const allowedOrigins = getCorsAllowedOrigins();
 await app.register(cors, {

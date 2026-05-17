@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import type { Part } from '@google/generative-ai';
 import { z } from 'zod';
 import { requireAuth } from '../lib/auth.js';
 import { createSupabaseUserClient, createSupabaseAdminClient } from '../lib/supabase.js';
@@ -60,11 +61,27 @@ export async function sessionRoutes(app: FastifyInstance) {
       return reply.code(500).send({ error: 'db_error', details: sessionError.message });
     }
 
+    let resumeData: Part | undefined;
+    if (body.resumePath) {
+      const { data: fileData, error: fileError } = await supabase.storage.from('resumes').download(body.resumePath);
+      if (!fileError && fileData) {
+        const arrayBuffer = await fileData.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        resumeData = {
+          inlineData: {
+            data: base64,
+            mimeType: fileData.type || 'application/pdf',
+          },
+        };
+      }
+    }
+
     const questions = await generateQuestions({
       role: body.role,
       experienceLevel: body.experienceLevel,
       interviewType: body.interviewType,
       questionCount: body.questionCount,
+      resumeData,
     });
 
     const { data: insertedQuestions, error: qError } = await supabase

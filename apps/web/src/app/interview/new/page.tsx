@@ -36,6 +36,12 @@ export default function NewInterviewPage() {
     }
 
     if (!accessToken || !userId) return;
+    
+    if (questionCount < 3) {
+      setError('Please select at least 3 questions.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
