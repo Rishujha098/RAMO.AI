@@ -26,9 +26,9 @@ const evaluationSchema = z.object({
     roleFit: z.number().min(0).max(100).optional(),
     technical: z.number().min(0).max(100).optional(),
   }),
-  strengths: z.array(z.string().min(1)),
-  improvements: z.array(z.string().min(1)),
-  idealAnswer: z.string().min(1),
+  strengths: z.array(z.string()),
+  improvements: z.array(z.string()),
+  idealAnswer: z.string(),
   confidenceSignals: z
     .object({
       hedgingPhrasesFound: z.array(z.string()).optional(),
