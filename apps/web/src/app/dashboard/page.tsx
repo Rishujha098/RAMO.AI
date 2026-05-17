@@ -17,7 +17,7 @@ type SessionRow = {
 };
 
 export default function DashboardPage() {
-  const { accessToken, previewMode, session } = useAuth();
+  const { accessToken, previewMode, session, isAdmin } = useAuth();
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string>('');
@@ -147,11 +147,13 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div className="text-sm">
-          <Link className="font-medium text-blue-700 hover:text-blue-800" href="/admin">
-            Admin
-          </Link>
-        </div>
+        {isAdmin && (
+          <div className="text-sm">
+            <Link className="font-medium text-blue-700 hover:text-blue-800" href="/admin">
+              Admin
+            </Link>
+          </div>
+        )}
       </div>
     </RequireAuth>
   );
