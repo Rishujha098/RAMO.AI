@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import type { Part } from '@google/generative-ai';
 import { z } from 'zod';
 import { env } from './env.js';
 
@@ -123,6 +124,7 @@ export async function generateQuestions(input: {
   experienceLevel: string;
   interviewType: 'technical' | 'hr' | 'mixed';
   questionCount: number;
+  resumeData?: Part;
 }): Promise<GeneratedQuestion[]> {
   const model = genAI.getGenerativeModel({ model: env.GEMINI_MODEL_QUESTIONS });
 
@@ -137,16 +139,24 @@ export async function generateQuestions(input: {
     `Interview Type: ${input.interviewType}`,
     `Num Questions: ${input.questionCount}`,
     '',
+    input.resumeData ? 'CRITICAL INSTRUCTION: A RESUME FILE IS ATTACHED. You MUST thoroughly analyze the attached resume and ask highly specific, personalized questions based directly on the candidate\\'s actual projects, skills, past companies, and detailed bullet points found in the document.' : '',
+    '',
     'REQUIREMENTS:',
     '- Valid JSON only - start with { and end with }',
     '- No markdown, no extra text before or after JSON',
     '- category: "technical" or "hr"',
     '- difficulty: "easy", "medium", or "hard"',
     '- For mixed type: include both categories',
+    '- Deeply tailor the questions to the resume if provided',
   ].join('\n');
 
+  const parts: Part[] = [{ text: prompt }];
+  if (input.resumeData) {
+    parts.push(input.resumeData);
+  }
+
   const result = await model.generateContent({
-    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    contents: [{ role: 'user', parts }],
     generationConfig: { responseMimeType: 'application/json' },
   });
 
